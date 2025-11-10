@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Arcane Nightfall</title>
   <link rel="stylesheet" href="style.css" />
@@ -58,6 +58,11 @@
       </div>
 
       <div class="panel">
+        <div class="label">Party</div>
+        <div id="party-box"></div>
+      </div>
+
+      <div class="panel">
         <div class="label">❤️ HP</div>
         <div class="bar"><div id="hp-fill" class="bar-fill hp" style="width:100%"></div></div>
 
@@ -74,10 +79,20 @@
       </div>
 
       <div class="panel">
-        <button onclick="startEncounter()">Battle</button>
+        <button onclick="startEncounter(1)">Find Single Enemy</button>
+        <button onclick="startEncounter(3)">Find Small Pack (3)</button>
         <button onclick="goTo('screen-spells')">Spells & Learn</button>
         <button onclick="goTo('screen-attacks')">Attacks</button>
-        <button onclick="clearHero()">Delete Hero</button>
+      </div>
+
+      <div class="panel">
+        <div class="label">Rest</div>
+        <button onclick="shortRest()">Short Rest</button>
+        <button onclick="longRest()">Long Rest</button>
+      </div>
+
+      <div class="panel">
+        <button onclick="clearHeroConfirm()">Delete Hero</button>
       </div>
     </div>
 
@@ -91,7 +106,7 @@
       </div>
 
       <div class="panel">
-        <div class="label">Available spells</div>
+        <div class="label">Available spells (class-specific)</div>
         <div id="available-spells"></div>
       </div>
 
@@ -116,11 +131,11 @@
 
     <!-- COMBAT SCREEN -->
     <div class="screen hidden" id="screen-combat">
-      <div id="title">⚔ Combat ⚔</div>
+      <div id="title">⚔ Encounter ⚔</div>
 
-      <div class="panel">
-        <div id="enemy-name">Enemy</div>
-        <div class="bar"><div id="enemy-hp-bar" class="bar-fill hp" style="width:100%"></div></div>
+      <div class="panel" id="enemies-panel">
+        <div class="label">Enemies</div>
+        <div id="enemies-list"></div>
       </div>
 
       <div class="panel log" id="battle-log"></div>
@@ -153,6 +168,16 @@
       <div id="cast-body"></div>
       <div style="height:8px"></div>
       <button onclick="closeCastModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- LEVEL-UP / GENERIC MODAL -->
+  <div id="modal" class="modal hidden">
+    <div class="modalContent">
+      <div id="modal-title"></div>
+      <div id="modal-body"></div>
+      <div style="height:8px"></div>
+      <button id="modal-ok">OK</button>
     </div>
   </div>
 
