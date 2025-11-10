@@ -1,82 +1,115 @@
-// -------- SAVE / LOAD HERO DATA --------
+let hero = null;
+let enemy = null;
 
-let hero = {
-  name: "",
-  race: "",
-  class: "",
-  level: 1,
-  stats: {},
+const classes = {
+  "Spellblade": "A balanced arcane warrior who channels magic through melee strikes.",
+  "Grim Herald": "A dark mage who sacrifices vitality to unleash cursed devastation.",
+  "Beastheart": "A primal tamer that fights alongside summoned wild familiars.",
+  "Stormbreaker": "A thunder-armored tank that controls lightning and shields allies.",
+  "Dawnpriest": "A radiant healer who restores allies and burns foes with holy light."
 };
 
-function saveHero() {
-  localStorage.setItem("arcaneHero", JSON.stringify(hero));
+function showClassInfo(selected) {
+  const chosen = selected || document.getElementById("classSelect").value;
+  document.getElementById("class-title").innerText = chosen;
+  document.getElementById("class-desc").innerText = classes[chosen];
+  document.getElementById("classModal").classList.remove("hidden");
 }
 
-function loadHero() {
-  const saved = localStorage.getItem("arcaneHero");
-  if (saved) {
-    hero = JSON.parse(saved);
-    populateHUD();
-    goTo("screen-hud");
-  }
+function closeModal() {
+  document.getElementById("classModal").classList.add("hidden");
 }
-
-// -------- STAT ROLLING (5d6 drop 2 lowest) --------
 
 function rollStat() {
-  let rolls = Array.from({ length: 5 }, () => Math.floor(Math.random() * 6) + 1);
-  rolls.sort((a, b) => a - b);
-  rolls.splice(0, 2); // remove 2 lowest
-  return rolls.reduce((a, b) => a + b, 0);
+  let r=[1,2,3,4,5].map(()=>Math.ceil(Math.random()*6));
+  r.sort(); r.splice(0,2);
+  return r.reduce((a,b)=>a+b,0);
 }
-
-function generateStats() {
-  return {
-    STR: rollStat(),
-    DEX: rollStat(),
-    CON: rollStat(),
-    INT: rollStat(),
-    WIS: rollStat(),
-    CHA: rollStat(),
-  };
-}
-
-// -------- HERO CREATION --------
 
 function createHero() {
-  hero.name = document.getElementById("heroName").value || "Nameless Hero";
-  hero.race = document.getElementById("raceSelect").value;
-  hero.class = document.getElementById("classSelect").value;
-  hero.stats = generateStats();
-
+  hero = {
+    name: heroName.value || "Hero",
+    race: raceSelect.value,
+    class: classSelect.value,
+    level: 1,
+    xp: 0,
+    stats: {
+      STR: rollStat(), DEX: rollStat(), CON: rollStat(),
+      INT: rollStat(), WIS: rollStat(), CHA: rollStat()
+    },
+    hp: 100,
+    mp: 50
+  };
   saveHero();
-  populateHUD();
+  loadHUD();
   goTo("screen-hud");
 }
 
-// -------- HUD UPDATE --------
+function saveHero(){ localStorage.setItem("hero", JSON.stringify(hero)); }
+function loadHero(){
+  let saved = localStorage.getItem("hero");
+  if(saved){ hero = JSON.parse(saved); loadHUD(); goTo("screen-hud"); }
+}
+function clearHero(){ localStorage.removeItem("hero"); location.reload(); }
 
-function populateHUD() {
+function loadHUD() {
   document.getElementById("hud-name").innerText = hero.name;
   document.getElementById("hud-race").innerText = hero.race;
   document.getElementById("hud-class").innerText = hero.class;
-  document.getElementById("hud-level").innerText = "Level " + hero.level;
+  document.getElementById("hud-level").innerText = `Level ${hero.level} (XP ${hero.xp}/${hero.level*100})`;
 
-  const statsBox = document.getElementById("hud-stats");
-  statsBox.innerHTML = "";
-  for (let key in hero.stats) {
-    statsBox.innerHTML += `<div>${key}: ${hero.stats[key]}</div>`;
-  }
+  hp-fill.style.width = hero.hp+"%";
+  mp-fill.style.width = hero.mp*2+"%";
+
+  hud-stats.innerHTML = "";
+  for(let s in hero.stats) hud-stats.innerHTML += `${s}: ${hero.stats[s]}<br>`;
 }
 
-// -------- SCREEN NAVIGATION --------
-
-function goTo(screenId) {
-  document.querySelectorAll(".screen").forEach(screen => screen.classList.add("hidden"));
-  document.getElementById(screenId).classList.remove("hidden");
+function startEncounter() {
+  enemy = { name:"Void Crawler", hp:80 };
+  document.getElementById("enemy-name").innerText = enemy.name;
+  updateEnemyHP();
+  log("A wild Void Crawler appears!");
+  goTo("screen-combat");
 }
 
-// Load hero on startup if exists
-window.onload = () => {
-  loadHero();
-};
+function playerAttack() {
+  let dmg = 6 + Math.floor(hero.stats.STR/2);
+  enemy.hp -= dmg;
+  log(`You strike for ${dmg} damage!`);
+  updateEnemyHP();
+
+  if(enemy.hp <= 0){
+    log("Enemy defeated! +20 XP");
+    hero.xp += 20;
+    saveHero();
+    setTimeout(()=>goTo("screen-hud"), 1500);
+  } else enemyTurn();
+}
+
+function enemyTurn(){
+  let dmg = 5;
+  hero.hp -= dmg;
+  log(`Enemy hits you for ${dmg}!`);
+  saveHero();
+  loadHUD();
+  if(hero.hp <= 0) log("You were defeated...");
+}
+
+function updateEnemyHP() {
+  enemy-hp-bar.style.width = Math.max(enemy.hp,0)+"%";
+}
+
+function endEncounter(){ goTo("screen-hud"); }
+
+function log(msg){
+  battle-log.innerHTML += msg+"<br>";
+  battle-log.scrollTop = battle-log.scrollHeight;
+}
+
+function goTo(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+
+window.onload = loadHero;
