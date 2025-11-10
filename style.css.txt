@@ -121,7 +121,7 @@ body {
   text-align:center;
 }
 
-/* buttons */
+/* quick slot styles are standard buttons */
 button {
   padding:8px;
   background:#6a5acd;
