@@ -1,5 +1,7 @@
+// ---------- Data & helpers ----------
 let hero = null;
 let enemy = null;
+let battle = null;
 
 const classes = {
   "Spellblade": "A balanced arcane warrior who channels magic through melee strikes.",
@@ -9,107 +11,345 @@ const classes = {
   "Dawnpriest": "A radiant healer who restores allies and burns foes with holy light."
 };
 
-function showClassInfo(selected) {
-  const chosen = selected || document.getElementById("classSelect").value;
-  document.getElementById("class-title").innerText = chosen;
-  document.getElementById("class-desc").innerText = classes[chosen];
-  document.getElementById("classModal").classList.remove("hidden");
-}
+// Spells dictionary (subset - extend as needed)
+const SPELLS = {
+  "cinder_burst": { name:"Cinder Burst", class:["Spellblade","Grim Herald","Dawnpriest"], level:3, target:"aoe", damage:"8d6", save:"DEX", type:"fire", slot_level:3, mana:8, description:"AoE fire. DEX save for half." },
+  "arc_shard_volley": { name:"Arc Shard Volley", class:["Spellblade"], level:1, target:"single", damage:"3d4+3", slot_level:1, mana:2, type:"arcane", description:"Single target arcane shards." },
+  "gleam_mend": { name:"Gleam Mend", class:["Dawnpriest"], level:1, target:"heal", heal:"1d6+2", slot_level:1, mana:3, type:"holy", description:"Heal an ally." },
+  "void_spike": { name:"Void Spike", class:["Grim Herald"], level:2, target:"single", damage:"2d8", slot_level:2, mana:4, type:"void", description:"Piercing dark energy." },
+  "ember_dart": { name:"Ember Dart", class:["Spellblade","Grim Herald"], level:0, target:"single", damage:"1d6", slot_level:0, mana:0, type:"fire", description:"Cantrip: small fire dart." }
+};
 
-function closeModal() {
-  document.getElementById("classModal").classList.add("hidden");
-}
+// attack lists (simple)
+const CLASS_ATTACKS = {
+  "Spellblade":[ {key:"arcane_bolt", name:"Arcane Bolt", dice:"1d8", stat:"STR"} ],
+  "Grim Herald":[ {key:"hex_strike", name:"Hex Strike", dice:"1d6", stat:"STR"} ],
+  "Beastheart":[ {key:"claw", name:"Beast Claw", dice:"1d6", stat:"STR"} ],
+  "Stormbreaker":[ {key:"thunder_slam", name:"Thunder Slam", dice:"1d10", stat:"STR"} ],
+  "Dawnpriest":[ {key:"blessing_strike", name:"Blessing Strike", dice:"1d6", stat:"WIS"} ]
+};
 
-function rollStat() {
-  let r=[1,2,3,4,5].map(()=>Math.ceil(Math.random()*6));
-  r.sort(); r.splice(0,2);
-  return r.reduce((a,b)=>a+b,0);
-}
+// weapon attacks
+const WEAPON_ATTACKS = {
+  "Longsword":[ {key:"steel_rend", name:"Steel Rend", dice:"1d8", stat:"STR"} ],
+  "Dagger":[ {key:"stab", name:"Stab", dice:"1d4", stat:"DEX"} ]
+};
 
-function createHero() {
-  hero = {
-    name: heroName.value || "Hero",
-    race: raceSelect.value,
-    class: classSelect.value,
-    level: 1,
-    xp: 0,
-    stats: {
-      STR: rollStat(), DEX: rollStat(), CON: rollStat(),
-      INT: rollStat(), WIS: rollStat(), CHA: rollStat()
-    },
-    hp: 100,
-    mp: 50
-  };
-  saveHero();
-  loadHUD();
-  goTo("screen-hud");
+// ---------- Utilities ----------
+function rollDice(notation){
+  // supports "NdM+K" or "NdM" or "K"
+  if(!notation) return 0;
+  notation = notation.replace(/\s+/g,'');
+  let plus = 0;
+  if(notation.includes('+')){
+    const parts = notation.split('+');
+    notation = parts[0];
+    plus = parseInt(parts[1])||0;
+  }
+  if(!notation.includes('d')) return parseInt(notation||0)+plus;
+  const [n,m] = notation.split('d').map(Number);
+  let s=0;
+  for(let i=0;i<n;i++) s += 1 + Math.floor(Math.random()*m);
+  return s + plus;
 }
 
 function saveHero(){ localStorage.setItem("hero", JSON.stringify(hero)); }
 function loadHero(){
-  let saved = localStorage.getItem("hero");
-  if(saved){ hero = JSON.parse(saved); loadHUD(); goTo("screen-hud"); }
+  const s = localStorage.getItem("hero");
+  if(s){ hero = JSON.parse(s); refreshAll(); goTo("screen-hud"); return true; }
+  return false;
 }
-function clearHero(){ localStorage.removeItem("hero"); location.reload(); }
+function clearHero(){ localStorage.removeItem("hero"); hero=null; location.reload(); }
 
-function loadHUD() {
+// ---------- Creation & HUD ----------
+function rollStat(){
+  const arr = Array.from({length:5},()=>Math.ceil(Math.random()*6));
+  arr.sort((a,b)=>a-b);
+  arr.splice(0,2);
+  return arr.reduce((a,b)=>a+b,0);
+}
+
+function createHero(){
+  hero = {
+    name: document.getElementById("heroName").value || "Hero",
+    race: document.getElementById("raceSelect").value,
+    class: document.getElementById("classSelect").value,
+    level: 1, xp:0,
+    stats: { STR:rollStat(), DEX:rollStat(), CON:rollStat(), INT:rollStat(), WIS:rollStat(), CHA:rollStat() },
+    maxHp: 50 + rollStat(), hp: 50, maxMp: 30, mp: 30,
+    slots: { "1":2, "2":1, "3":0, "4":0 }, // simple starter slots
+    knownSpells: ["ember_dart"],
+    weapon: "Longsword"
+  };
+  saveHero();
+  refreshAll();
+  goTo("screen-hud");
+}
+
+function refreshAll(){
+  if(!hero) return;
   document.getElementById("hud-name").innerText = hero.name;
   document.getElementById("hud-race").innerText = hero.race;
   document.getElementById("hud-class").innerText = hero.class;
   document.getElementById("hud-level").innerText = `Level ${hero.level} (XP ${hero.xp}/${hero.level*100})`;
 
-  hp-fill.style.width = hero.hp+"%";
-  mp-fill.style.width = hero.mp*2+"%";
+  document.getElementById("hp-fill").style.width = Math.max(0, Math.min(100, Math.floor((hero.hp/hero.maxHp)*100))) + "%";
+  document.getElementById("mp-fill").style.width = Math.max(0, Math.min(100, Math.floor((hero.mp/hero.maxMp)*100))) + "%";
 
-  hud-stats.innerHTML = "";
-  for(let s in hero.stats) hud-stats.innerHTML += `${s}: ${hero.stats[s]}<br>`;
+  // slots display
+  const sb = document.getElementById("slots-box");
+  sb.innerHTML = "";
+  for(let lvl of Object.keys(hero.slots).sort((a,b)=>+a - +b)){
+    sb.innerHTML += `L${lvl}: ${hero.slots[lvl]} &nbsp; `;
+  }
+
+  // stats
+  const sbox = document.getElementById("hud-stats");
+  sbox.innerHTML = "";
+  for(const k in hero.stats) sbox.innerHTML += `${k}: ${hero.stats[k]}<br/>`;
+
+  // known spells and available spells
+  renderKnownSpells();
+  renderAvailableSpells();
+  renderAttacks();
 }
 
-function startEncounter() {
-  enemy = { name:"Void Crawler", hp:80 };
+// ---------- Spells UI ----------
+function renderKnownSpells(){
+  const ks = document.getElementById("known-spells");
+  ks.innerHTML = "";
+  (hero.knownSpells||[]).forEach(key=>{
+    const sp = SPELLS[key];
+    if(!sp) return;
+    const div = document.createElement("div");
+    div.innerHTML = `${sp.name} (Lv ${sp.level}) — ${sp.description} <button onclick="castSpell('${key}')">Cast</button>`;
+    ks.appendChild(div);
+  });
+}
+
+function renderAvailableSpells(){
+  const av = document.getElementById("available-spells");
+  av.innerHTML = "";
+  for(const key in SPELLS){
+    const sp = SPELLS[key];
+    // show spells usable by class and not already learned
+    if(sp.class.includes(hero.class) && (!hero.knownSpells || !hero.knownSpells.includes(key))){
+      const div=document.createElement("div");
+      div.innerHTML = `${sp.name} (Lv ${sp.level}) — ${sp.description} <button onclick="learnSpell('${key}')">Learn</button>`;
+      av.appendChild(div);
+    }
+  }
+}
+
+// learn a spell
+function learnSpell(key){
+  if(!hero.knownSpells) hero.knownSpells = [];
+  if(hero.knownSpells.includes(key)) return alert("Already known");
+  hero.knownSpells.push(key);
+  saveHero(); refreshAll();
+  alert(`${SPELLS[key].name} learned!`);
+}
+
+// ---------- Consume slot or mana (prefers slot) ----------
+function chooseAndConsumeResource(spell){
+  const meta = SPELLS[spell];
+  if(!meta) return {type:null};
+  // prefer slot if slot_level > 0 and available
+  if(meta.slot_level && meta.slot_level > 0){
+    const lvl = String(meta.slot_level);
+    if(hero.slots && hero.slots[lvl] && hero.slots[lvl] > 0){
+      hero.slots[lvl] -= 1;
+      return {type:'slot', level: meta.slot_level};
+    }
+  }
+  // fallback to mana if available
+  if(meta.mana && hero.mp >= meta.mana){
+    hero.mp -= meta.mana;
+    return {type:'mana', amount: meta.mana};
+  }
+  return {type:null};
+}
+
+// ---------- Spell resolution ----------
+function castSpell(key){
+  if(!hero.knownSpells || !hero.knownSpells.includes(key)) { alert("You don't know that spell"); return; }
+  const sp = SPELLS[key];
+  if(!sp) return alert("Spell data missing");
+
+  const resource = chooseAndConsumeResource(key);
+  if(resource.type === null){
+    return alert("Not enough spell slots or mana to cast.");
+  }
+
+  // apply effect according to target type
+  if(sp.target === "single"){
+    // single target is enemy in current battle
+    if(!enemy) return alert("No target.");
+    const dmg = rollDice(sp.damage);
+    enemy.hp -= dmg;
+    appendLog(`${hero.name} casts ${sp.name} → ${dmg} ${sp.type} damage`);
+    if(enemy.hp <= 0){ onEnemyDefeated(); }
+  } else if(sp.target === "aoe"){
+    if(!enemy) return alert("No target.");
+    const dmg = rollDice(sp.damage);
+    // single enemy implementation (expand to multiple later)
+    enemy.hp -= dmg;
+    appendLog(`${hero.name} casts ${sp.name} (AoE) → ${dmg} ${sp.type} damage`);
+    if(enemy.hp <= 0) onEnemyDefeated();
+  } else if(sp.target === "heal"){
+    // heal hero
+    const heal = rollDice(sp.heal);
+    hero.hp = Math.min(hero.maxHp, hero.hp + heal);
+    appendLog(`${hero.name} casts ${sp.name} → heals ${heal}`);
+  }
+
+  saveHero();
+  refreshAll();
+  updateEnemyBar();
+}
+
+// ---------- Combat integration ----------
+function startEncounter(){
+  if(!hero){ alert("Create a hero first"); return; }
+  enemy = { name: "Umbra Warden", hp: 120, maxHp: 120 };
+  battle = { turn: "player" };
   document.getElementById("enemy-name").innerText = enemy.name;
-  updateEnemyHP();
-  log("A wild Void Crawler appears!");
+  updateEnemyBar();
+  appendLog("An Umbra Warden appears!");
   goTo("screen-combat");
 }
 
-function playerAttack() {
-  let dmg = 6 + Math.floor(hero.stats.STR/2);
-  enemy.hp -= dmg;
-  log(`You strike for ${dmg} damage!`);
-  updateEnemyHP();
+function updateEnemyBar(){
+  const pct = Math.max(0, Math.floor((enemy.hp/enemy.maxHp)*100));
+  document.getElementById("enemy-hp-bar").style.width = pct + "%";
+}
 
-  if(enemy.hp <= 0){
-    log("Enemy defeated! +20 XP");
-    hero.xp += 20;
-    saveHero();
-    setTimeout(()=>goTo("screen-hud"), 1500);
-  } else enemyTurn();
+function appendLog(txt){
+  const box = document.getElementById("battle-log");
+  box.innerHTML += txt + "<br/>";
+  box.scrollTop = box.scrollHeight;
+}
+
+function playerAction(type){
+  if(!enemy){ appendLog("No enemy."); return; }
+  if(type === "attack"){
+    // simple weapon attack
+    const attack = CLASS_ATTACKS[hero.class] ? CLASS_ATTACKS[hero.class][0] : null;
+    const dice = attack ? attack.dice : "1d6";
+    const dmg = rollDice(dice) + Math.floor((hero.stats.STR||10 - 10)/2);
+    enemy.hp -= dmg;
+    appendLog(`${hero.name} attacks for ${dmg} physical damage.`);
+    if(enemy.hp <= 0){ onEnemyDefeated(); return; }
+  } else if(type === "defend"){
+    appendLog(`${hero.name} braces for incoming attack (reduced damage).`);
+    // simple defend flag - reduce next incoming damage
+    hero._defend = true;
+  }
+  // enemy acts instantly after player (instant turns)
+  enemyTurn();
+  saveHero();
+  refreshAll();
+  updateEnemyBar();
 }
 
 function enemyTurn(){
-  let dmg = 5;
-  hero.hp -= dmg;
-  log(`Enemy hits you for ${dmg}!`);
+  if(!enemy || enemy.hp <= 0) return;
+  // basic enemy attack
+  let base = 8;
+  if(hero._defend){ base = Math.max(1, Math.floor(base/2)); hero._defend = false; }
+  hero.hp -= base;
+  appendLog(`${enemy.name} hits for ${base} damage.`);
   saveHero();
-  loadHUD();
-  if(hero.hp <= 0) log("You were defeated...");
+  refreshAll();
+  if(hero.hp <= 0){
+    appendLog("You were defeated...");
+    // simple defeat behavior
+    goTo("screen-hud");
+  }
 }
 
-function updateEnemyHP() {
-  enemy-hp-bar.style.width = Math.max(enemy.hp,0)+"%";
+function onEnemyDefeated(){
+  appendLog(`${enemy.name} defeated! You earn 50 XP.`);
+  hero.xp = (hero.xp||0) + 50;
+  // level up check
+  const need = hero.level * 100;
+  if(hero.xp >= need){
+    hero.xp -= need;
+    hero.level++;
+    // grant +1 to a chosen stat automatically (per your choice earlier)
+    // we will prompt the player to choose the stat
+    promptLevelStat(); // this will save & refresh after selection
+  }
+  saveHero();
+  refreshAll();
+  goTo("screen-hud");
 }
 
-function endEncounter(){ goTo("screen-hud"); }
-
-function log(msg){
-  battle-log.innerHTML += msg+"<br>";
-  battle-log.scrollTop = battle-log.scrollHeight;
+// ---------- Level up stat picker ----------
+function promptLevelStat(){
+  const body = document.getElementById("modal-body");
+  const title = document.getElementById("modal-title");
+  title.innerText = `Level Up! Choose +1 to a stat (Level ${hero.level})`;
+  body.innerHTML = "";
+  for(let s in hero.stats){
+    const b = document.createElement("button");
+    b.innerText = `${s}: ${hero.stats[s]}`;
+    b.style.display = "block";
+    b.style.margin = "6px 0";
+    b.onclick = ()=>{ hero.stats[s]++; saveHero(); closeModalCustom(); refreshAll(); };
+    body.appendChild(b);
+  }
+  // show modal
+  document.getElementById("modal").classList.remove("hidden");
+  document.getElementById("modal-ok").onclick = ()=>{ document.getElementById("modal").classList.add("hidden"); };
 }
 
+function closeModalCustom(){ document.getElementById("modal").classList.add("hidden"); }
+
+// ---------- Cast modal (choose known spell and target) ----------
+function openCastModal(){
+  if(!hero || !hero.knownSpells || hero.knownSpells.length===0){ alert("You know no spells"); return; }
+  const body = document.getElementById("cast-body");
+  body.innerHTML = "";
+  hero.knownSpells.forEach(k=>{
+    const sp = SPELLS[k];
+    if(!sp) return;
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${sp.name}</b> (Lv ${sp.level}) — ${sp.description} <button onclick="castSpellAndClose('${k}')">Cast</button>`;
+    body.appendChild(div);
+  });
+  document.getElementById("castModal").classList.remove("hidden");
+}
+function closeCastModal(){ document.getElementById("castModal").classList.add("hidden"); }
+function castSpellAndClose(key){ castSpell(key); closeCastModal(); }
+
+// ---------- Attacks UI ----------
+function renderAttacks(){
+  const ca = document.getElementById("class-attacks");
+  const wa = document.getElementById("weapon-attacks");
+  ca.innerHTML = "";
+  wa.innerHTML = "";
+  (CLASS_ATTACKS[hero.class]||[]).forEach(a=>{
+    ca.innerHTML += `${a.name} (${a.dice}) <br/>`;
+  });
+  (WEAPON_ATTACKS[hero.weapon]||[]).forEach(a=>{
+    wa.innerHTML += `${a.name} (${a.dice}) <br/>`;
+  });
+}
+
+// ---------- Screen navigation ----------
 function goTo(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
 }
 
-window.onload = loadHero;
+// ---------- Init ----------
+window.onload = function(){
+  if(loadHero()) return;
+  // no hero: stay on create screen
+  // wire modal controls
+  document.getElementById("modal-ok").onclick = ()=>{ document.getElementById("modal").classList.add("hidden"); };
+};
+
+// ---------- Minimal helper to ensure IDs referenced exist in DOM in older versions ------------
+function $(id){ return document.getElementById(id); }
