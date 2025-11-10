@@ -1,7 +1,82 @@
-// Switch screen function
+// -------- SAVE / LOAD HERO DATA --------
+
+let hero = {
+  name: "",
+  race: "",
+  class: "",
+  level: 1,
+  stats: {},
+};
+
+function saveHero() {
+  localStorage.setItem("arcaneHero", JSON.stringify(hero));
+}
+
+function loadHero() {
+  const saved = localStorage.getItem("arcaneHero");
+  if (saved) {
+    hero = JSON.parse(saved);
+    populateHUD();
+    goTo("screen-hud");
+  }
+}
+
+// -------- STAT ROLLING (5d6 drop 2 lowest) --------
+
+function rollStat() {
+  let rolls = Array.from({ length: 5 }, () => Math.floor(Math.random() * 6) + 1);
+  rolls.sort((a, b) => a - b);
+  rolls.splice(0, 2); // remove 2 lowest
+  return rolls.reduce((a, b) => a + b, 0);
+}
+
+function generateStats() {
+  return {
+    STR: rollStat(),
+    DEX: rollStat(),
+    CON: rollStat(),
+    INT: rollStat(),
+    WIS: rollStat(),
+    CHA: rollStat(),
+  };
+}
+
+// -------- HERO CREATION --------
+
+function createHero() {
+  hero.name = document.getElementById("heroName").value || "Nameless Hero";
+  hero.race = document.getElementById("raceSelect").value;
+  hero.class = document.getElementById("classSelect").value;
+  hero.stats = generateStats();
+
+  saveHero();
+  populateHUD();
+  goTo("screen-hud");
+}
+
+// -------- HUD UPDATE --------
+
+function populateHUD() {
+  document.getElementById("hud-name").innerText = hero.name;
+  document.getElementById("hud-race").innerText = hero.race;
+  document.getElementById("hud-class").innerText = hero.class;
+  document.getElementById("hud-level").innerText = "Level " + hero.level;
+
+  const statsBox = document.getElementById("hud-stats");
+  statsBox.innerHTML = "";
+  for (let key in hero.stats) {
+    statsBox.innerHTML += `<div>${key}: ${hero.stats[key]}</div>`;
+  }
+}
+
+// -------- SCREEN NAVIGATION --------
+
 function goTo(screenId) {
-  document.querySelectorAll(".screen").forEach(screen => {
-    screen.classList.add("hidden");
-  });
+  document.querySelectorAll(".screen").forEach(screen => screen.classList.add("hidden"));
   document.getElementById(screenId).classList.remove("hidden");
 }
+
+// Load hero on startup if exists
+window.onload = () => {
+  loadHero();
+};
