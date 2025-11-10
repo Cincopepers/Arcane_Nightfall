@@ -52,20 +52,24 @@
   </div>
 
   <!-- PLAYER HUD SCREEN -->
-  <div class="screen hidden" id="screen-hud">
-    <div id="title">🛡 Hero HUD 🛡</div>
+<div class="screen hidden" id="screen-hud">
+  <div id="title">🛡 Hero HUD 🛡</div>
 
-    <div class="panel">
-      <div class="label">❤️ HP</div>
-      <div class="bar"><div class="bar-fill hp"></div></div>
-
-      <div class="label">🔷 MANA</div>
-      <div class="bar"><div class="bar-fill mp"></div></div>
-    </div>
-
-    <button onclick="goTo('screen-combat')">Start Battle</button>
-    <button onclick="goTo('screen-menu')">Back to Menu</button>
+  <div class="panel">
+    <div id="hud-name">Name</div>
+    <div id="hud-race">Race</div>
+    <div id="hud-class">Class</div>
+    <div id="hud-level">Level 1</div>
   </div>
+
+  <div class="panel">
+    <div class="label">📊 Stats</div>
+    <div id="hud-stats"></div>
+  </div>
+
+  <button onclick="goTo('screen-combat')">Start Battle</button>
+  <button onclick="goTo('screen-menu')">Main Menu</button>
+</div>
 
   <!-- COMBAT SCREEN -->
   <div class="screen hidden" id="screen-combat">
