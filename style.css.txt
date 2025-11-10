@@ -1,20 +1,85 @@
-/* Screen system */
-.screen {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+  background:#0a0a16;
+  font-family:'Press Start 2P',monospace;
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
 }
 
-.hidden {
-  display: none;
+#game-container {
+  width:360px;
+  height:680px;
+  background:#111;
+  border:6px solid #5a4ca8;
+  border-radius:6px;
+  padding:10px;
 }
 
-input, select {
-  width: 100%;
-  padding: 8px;
-  background: #1b1f32;
-  border: 3px solid #7b6ca5;
-  color: #fff;
-  font-family: inherit;
+.screen { display:flex; flex-direction:column; gap:8px; }
+.hidden { display:none !important; }
+
+.panel {
+  background:#1b1f30;
+  border:4px solid #7b6ca5;
+  padding:8px;
+  border-radius:5px;
+}
+
+.label { font-size:10px; color:#b8b5ff; }
+
+.bar {
+  background:#222;
+  height:10px;
+  border:2px solid #555;
+}
+
+.bar-fill {
+  height:100%;
+  width:100%;
+}
+
+.hp { background:red; }
+.mp { background:#3498ff; }
+
+.log {
+  height:150px;
+  overflow:auto;
+  background:#000;
+  font-size:9px;
+  padding:5px;
+}
+
+button {
+  padding:6px;
+  background:#6a5acd;
+  border:none;
+  color:white;
+  font-family:inherit;
+  cursor:pointer;
+  border-radius:4px;
+}
+button:hover { background:#7f6fff; }
+
+.modal {
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.7);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.modalContent {
+  background:#1a1a2a;
+  padding:15px;
+  border:4px solid #6c5ce7;
+  width:80%;
+  border-radius:6px;
+  text-align:center;
 }
