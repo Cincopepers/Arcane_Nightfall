@@ -43,7 +43,7 @@
 
       <button onclick="createHero()">Roll Stats & Begin</button>
       <div style="height:8px"></div>
-      <button onclick="loadHero()">Load Existing Hero</button>
+      <button onclick="loadAll()">Load Existing Hero</button>
     </div>
 
     <!-- HERO HUD -->
@@ -92,7 +92,7 @@
       </div>
 
       <div class="panel">
-        <button onclick="clearHeroConfirm()">Delete Hero</button>
+        <button onclick="clearAllConfirm()">Delete Hero</button>
       </div>
     </div>
 
@@ -108,6 +108,11 @@
       <div class="panel">
         <div class="label">Available spells (class-specific)</div>
         <div id="available-spells"></div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Quick Bar Assign</div>
+        <div id="quick-assign-hint" style="font-size:11px;color:#ddd">Tap "Assign → Slot" to pin a spell to a quick button.</div>
       </div>
 
       <div class="panel">
@@ -141,8 +146,17 @@
       <div class="panel log" id="battle-log"></div>
 
       <div class="panel">
+        <!-- quick spell hotbar (3) -->
+        <div style="display:flex;gap:6px;">
+          <button id="quick-1" onclick="quickCast(0)">Quick 1</button>
+          <button id="quick-2" onclick="quickCast(1)">Quick 2</button>
+          <button id="quick-3" onclick="quickCast(2)">Quick 3</button>
+          <button style="flex:1" onclick="openCastModal()">All Spells</button>
+        </div>
+      </div>
+
+      <div class="panel">
         <button onclick="playerAction('attack')">Attack</button>
-        <button onclick="openCastModal()">Cast Spell</button>
         <button onclick="playerAction('defend')">Defend</button>
         <button onclick="endEncounter()">Flee</button>
       </div>
@@ -157,14 +171,14 @@
     <div class="modalContent">
       <h3 id="class-title">Class</h3>
       <p id="class-desc">Description...</p>
-      <button onclick="closeModal()">Close</button>
+      <button onclick="closeClassModal()">Close</button>
     </div>
   </div>
 
   <!-- CAST MODAL -->
   <div id="castModal" class="modal hidden">
     <div class="modalContent">
-      <h3 id="cast-title">Cast Spell</h3>
+      <h3 id="cast-title">Cast / Assign Spells</h3>
       <div id="cast-body"></div>
       <div style="height:8px"></div>
       <button onclick="closeCastModal()">Close</button>
