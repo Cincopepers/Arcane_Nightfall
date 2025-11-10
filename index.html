@@ -1,1 +1,35 @@
-<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Arcane Nightfall</title></head><body><div id='root'></div><script type='module' src='/src/main.jsx'></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcane Nightfall</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game-container">
+
+  <div id="title">⚔ ARCANE NIGHTFALL ⚔</div>
+
+  <div class="panel">
+      <div class="label">❤️ HP</div>
+      <div class="bar"><div class="bar-fill hp"></div></div>
+
+      <div class="label">🔷 MANA</div>
+      <div class="bar"><div class="bar-fill mp"></div></div>
+  </div>
+
+  <div class="panel">
+      <div class="label">⚔ Character: --</div>
+      <div class="label">🛡 Class: --</div>
+      <div class="label">⭐ Level: 1</div>
+  </div>
+
+  <button onclick="startGame()">ENTER WORLD</button>
+
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
