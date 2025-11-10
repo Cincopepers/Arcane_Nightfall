@@ -1,3 +1,7 @@
-function startGame() {
-    alert("The realm wakes... Welcome, hero.");
+// Switch screen function
+function goTo(screenId) {
+  document.querySelectorAll(".screen").forEach(screen => {
+    screen.classList.add("hidden");
+  });
+  document.getElementById(screenId).classList.remove("hidden");
 }
