@@ -10,23 +10,77 @@
 
 <div id="game-container">
 
-  <div id="title">⚔ ARCANE NIGHTFALL ⚔</div>
+  <!-- CHARACTER CREATION SCREEN -->
+  <div class="screen" id="screen-create">
+    <div id="title">✨ Create Your Hero ✨</div>
 
-  <div class="panel">
+    <div class="panel">
+      <div class="label">Hero Name</div>
+      <input id="heroName" placeholder="Enter name..." />
+    </div>
+
+    <div class="panel">
+      <div class="label">Race</div>
+      <select id="raceSelect">
+        <option>Starblood (Elf-touched)</option>
+        <option>Ironkin (Dwarf-bound)</option>
+        <option>Emberfolk (Fire-blessed)</option>
+        <option>Umbric (Shadow-touched)</option>
+        <option>Wildborn (Nature-touched)</option>
+      </select>
+    </div>
+
+    <div class="panel">
+      <div class="label">Class</div>
+      <select id="classSelect">
+        <option>Spellblade</option>
+        <option>Grim Herald</option>
+        <option>Beastheart</option>
+        <option>Stormbreaker</option>
+        <option>Dawnpriest</option>
+      </select>
+    </div>
+
+    <button onclick="goTo('screen-menu')">Confirm Hero</button>
+  </div>
+
+  <!-- MAIN MENU SCREEN -->
+  <div class="screen hidden" id="screen-menu">
+    <div id="title">⚔ Main Menu ⚔</div>
+    <button onclick="goTo('screen-hud')">Enter World</button>
+    <button onclick="goTo('screen-create')">New Hero</button>
+    <button onclick="alert('Party system soon')">Party</button>
+  </div>
+
+  <!-- PLAYER HUD SCREEN -->
+  <div class="screen hidden" id="screen-hud">
+    <div id="title">🛡 Hero HUD 🛡</div>
+
+    <div class="panel">
       <div class="label">❤️ HP</div>
       <div class="bar"><div class="bar-fill hp"></div></div>
 
       <div class="label">🔷 MANA</div>
       <div class="bar"><div class="bar-fill mp"></div></div>
+    </div>
+
+    <button onclick="goTo('screen-combat')">Start Battle</button>
+    <button onclick="goTo('screen-menu')">Back to Menu</button>
   </div>
 
-  <div class="panel">
-      <div class="label">⚔ Character: --</div>
-      <div class="label">🛡 Class: --</div>
-      <div class="label">⭐ Level: 1</div>
-  </div>
+  <!-- COMBAT SCREEN -->
+  <div class="screen hidden" id="screen-combat">
+    <div id="title">⚔ Combat ⚔</div>
 
-  <button onclick="startGame()">ENTER WORLD</button>
+    <div class="panel">
+      <div class="label">Enemy: Void Crawler</div>
+      <div class="bar"><div class="bar-fill hp" style="width:50%"></div></div>
+    </div>
+
+    <button onclick="alert('Attack soon')">Attack</button>
+    <button onclick="alert('Spell soon')">Cast Spell</button>
+    <button onclick="goTo('screen-hud')">Flee</button>
+  </div>
 
 </div>
 
