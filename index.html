@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Arcane Nightfall</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <div id="game-container">
 
-  <!-- CHARACTER CREATION SCREEN -->
+  <!-- CHARACTER CREATION -->
   <div class="screen" id="screen-create">
     <div id="title">✨ Create Your Hero ✨</div>
 
@@ -22,69 +22,82 @@
     <div class="panel">
       <div class="label">Race</div>
       <select id="raceSelect">
-        <option>Starblood (Elf-touched)</option>
-        <option>Ironkin (Dwarf-bound)</option>
-        <option>Emberfolk (Fire-blessed)</option>
-        <option>Umbric (Shadow-touched)</option>
-        <option>Wildborn (Nature-touched)</option>
+        <option>Starblood</option>
+        <option>Ironkin</option>
+        <option>Emberfolk</option>
+        <option>Umbric</option>
+        <option>Wildborn</option>
       </select>
     </div>
 
     <div class="panel">
       <div class="label">Class</div>
-      <select id="classSelect">
-        <option>Spellblade</option>
-        <option>Grim Herald</option>
-        <option>Beastheart</option>
-        <option>Stormbreaker</option>
-        <option>Dawnpriest</option>
+      <select id="classSelect" onchange="showClassInfo(this.value)">
+        <option value="Spellblade">Spellblade</option>
+        <option value="Grim Herald">Grim Herald</option>
+        <option value="Beastheart">Beastheart</option>
+        <option value="Stormbreaker">Stormbreaker</option>
+        <option value="Dawnpriest">Dawnpriest</option>
       </select>
+      <button class="infoBtn" onclick="showClassInfo()">Class Info</button>
     </div>
 
     <button onclick="createHero()">Roll Stats & Begin</button>
-
-  <!-- MAIN MENU SCREEN -->
-  <div class="screen hidden" id="screen-menu">
-    <div id="title">⚔ Main Menu ⚔</div>
-    <button onclick="goTo('screen-hud')">Enter World</button>
-    <button onclick="goTo('screen-create')">New Hero</button>
-    <button onclick="alert('Party system soon')">Party</button>
+    <button onclick="loadHero()">Load Existing Hero</button>
   </div>
 
-  <!-- PLAYER HUD SCREEN -->
-<div class="screen hidden" id="screen-hud">
-  <div id="title">🛡 Hero HUD 🛡</div>
+  <!-- HERO HUD -->
+  <div class="screen hidden" id="screen-hud">
+    <div id="title">🛡 Hero HUD 🛡</div>
 
-  <div class="panel">
-    <div id="hud-name">Name</div>
-    <div id="hud-race">Race</div>
-    <div id="hud-class">Class</div>
-    <div id="hud-level">Level 1</div>
+    <div class="panel">
+      <div id="hud-name">Name</div>
+      <div id="hud-race">Race</div>
+      <div id="hud-class">Class</div>
+      <div id="hud-level">Level 1 (XP 0/100)</div>
+    </div>
+
+    <div class="panel">
+      <div class="label">❤️ HP</div>
+      <div class="bar"><div id="hp-fill" class="bar-fill hp"></div></div>
+
+      <div class="label">🔷 Mana</div>
+      <div class="bar"><div id="mp-fill" class="bar-fill mp"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="label">📊 Stats</div>
+      <div id="hud-stats"></div>
+    </div>
+
+    <button onclick="startEncounter()">Battle</button>
+    <button onclick="clearHero()">Delete Hero</button>
   </div>
-
-  <div class="panel">
-    <div class="label">📊 Stats</div>
-    <div id="hud-stats"></div>
-  </div>
-
-  <button onclick="goTo('screen-combat')">Start Battle</button>
-  <button onclick="goTo('screen-menu')">Main Menu</button>
-</div>
 
   <!-- COMBAT SCREEN -->
   <div class="screen hidden" id="screen-combat">
     <div id="title">⚔ Combat ⚔</div>
 
     <div class="panel">
-      <div class="label">Enemy: Void Crawler</div>
-      <div class="bar"><div class="bar-fill hp" style="width:50%"></div></div>
+      <div id="enemy-name">Enemy</div>
+      <div class="bar"><div id="enemy-hp-bar" class="bar-fill hp"></div></div>
     </div>
 
-    <button onclick="alert('Attack soon')">Attack</button>
-    <button onclick="alert('Spell soon')">Cast Spell</button>
-    <button onclick="goTo('screen-hud')">Flee</button>
+    <div class="panel log" id="battle-log"></div>
+
+    <button onclick="playerAttack()">Attack</button>
+    <button onclick="endEncounter()">Flee</button>
   </div>
 
+</div>
+
+<!-- CLASS INFO MODAL -->
+<div id="classModal" class="modal hidden">
+  <div class="modalContent">
+    <h3 id="class-title">Class</h3>
+    <p id="class-desc">Description...</p>
+    <button onclick="closeModal()">Close</button>
+  </div>
 </div>
 
 <script src="game.js"></script>
